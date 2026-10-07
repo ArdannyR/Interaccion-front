@@ -1,11 +1,25 @@
 # Consultorio Interacción - Frontend
 
-Aplicación web para un consultorio psicológico que permite gestionar pacientes, terapeutas y documentos de forma segura, mediante un sistema de roles.
+Aplicación web para un consultorio psicológico que permite gestionar pacientes, terapeutas y planes de tratamiento de forma segura, mediante un sistema de roles.
 
 ## Estructura de Roles
 
-1. **Directora**: Tiene acceso total. Puede ver/crear pacientes, asignar pacientes a terapeutas, gestionar perfiles de terapeutas, y subir/eliminar/descargar documentos de cualquier paciente.
-2. **Terapeuta**: Solo tiene acceso a los pacientes que le han sido asignados y a sus documentos (en modo solo lectura y descarga).
+1. **Directora**: Tiene acceso total. Puede ver/crear pacientes, añadir planes de tratamiento, ver la lista de terapeutas y configurar ajustes visuales.
+2. **Terapeuta**: Próximamente dispondrá de su propio espacio. Actualmente visualiza un mensaje informativo al iniciar sesión.
+
+## Rutas y Layout
+
+La aplicación para la directora sigue un diseño tipo Moodle (Barra lateral a la izquierda) y cuenta con las siguientes rutas:
+- `/pacientes` (Lista principal de pacientes)
+- `/pacientes/nuevo` (Formulario para añadir un paciente)
+- `/pacientes/:id` (Vista de detalles de un paciente y su historial de tratamientos)
+- `/pacientes/:id/editar` (Edición de datos de un paciente)
+- `/pacientes/:id/plan/nuevo` (Crear un plan de tratamiento nuevo)
+- `/pacientes/:id/plan/:planId/editar` (Editar un plan de tratamiento existente)
+- `/terapeutas` (Directorio de terapeutas, solo lectura)
+- `/horarios` (Vista previa del horario)
+- `/perfil` (Datos de la cuenta iniciada)
+- `/ajustes` (Configuración de tonos y tamaño de texto)
 
 ## Requisitos previos
 
@@ -36,14 +50,5 @@ Es **obligatorio** configurar la base de datos para que la aplicación funcione.
 Revisa el archivo `supabase.sql` incluido en la raíz de este proyecto. Copia y pega su contenido en la sección **SQL Editor** de tu panel de Supabase y ejecútalo.
 
 Este script se encargará de:
-- Crear los Enum y las tablas (`perfiles`, `pacientes`, `asignaciones`, `documentos`).
+- Crear los Enum y las tablas (`perfiles`, `pacientes`, `planes_tratamiento`).
 - Crear funciones de seguridad y activar Row Level Security (RLS) para proteger los datos a nivel de base de datos.
-- Proteger el bucket de Storage llamado `pdfs`.
-
-### Cuentas de Prueba
-
-Dado que las cuentas de usuario (`auth.users`) no se crean desde la aplicación (por seguridad), debes:
-1. Ir a Supabase > Authentication > Add user y crear los usuarios (ej. directora@test.com, terapeuta1@test.com).
-2. Copiar los UUIDs (User UID) generados.
-3. Al final del archivo `supabase.sql` encontrarás un script comentado (`INSERT DATOS DE PRUEBA`).
-4. Reemplaza los `<UUID-MARTA>`, `<UUID-GUADALUPE>`, etc., por los UUIDs que copiaste y ejecuta esa parte del script para poblar los perfiles, pacientes y asignaciones iniciales.

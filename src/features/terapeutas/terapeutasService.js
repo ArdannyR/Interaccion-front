@@ -4,7 +4,7 @@ export const terapeutasService = {
   async getTerapeutas() {
     const { data, error } = await supabase
       .from('perfiles')
-      .select('*, asignaciones(count)')
+      .select('*')
       .eq('rol', 'terapeuta')
       .eq('activo', true)
       .order('nombres', { ascending: true });

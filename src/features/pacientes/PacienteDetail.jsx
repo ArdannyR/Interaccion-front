@@ -1,260 +1,156 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { pacientesService } from './pacientesService';
-import { asignacionesService } from '../asignaciones/asignacionesService';
-import { terapeutasService } from '../terapeutas/terapeutasService';
-import { documentosService } from '../documents/documentsService';
-import { useAuth } from '../auth/AuthContext';
-import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { Spinner } from '../../components/Spinner';
-import { DocumentCard } from '../documents/DocumentCard';
-import { Input } from '../../components/Input';
+
+// Utility function duplicated here for simplicity, normally it would go to a shared utils file.
+function calcularEdad(fechaNacimiento) {
+  if (!fechaNacimiento) return '';
+  const nac = new Date(fechaNacimiento + 'T00:00:00');
+  const hoy = new Date();
+  let anios = hoy.getFullYear() - nac.getFullYear();
+  let meses = hoy.getMonth() - nac.getMonth();
+  if (meses < 0 || (meses === 0 && hoy.getDate() < nac.getDate())) {
+    anios--;
+    meses += 12;
+  }
+  if (hoy.getDate() < nac.getDate()) {
+    meses--;
+    if (meses < 0) {
+      meses = 11;
+    }
+  }
+  if (anios === 0) return `${meses} meses`;
+  if (meses === 0) return `${anios} años`;
+  return `${anios} años y ${meses} meses`;
+}
 
 export function PacienteDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { perfil } = useAuth();
-  
   const [paciente, setPaciente] = useState(null);
-  const [asignaciones, setAsignaciones] = useState([]);
-  const [documentos, setDocumentos] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // States for Assign Therapist
-  const [terapeutas, setTerapeutas] = useState([]);
-  const [selectedTerapeuta, setSelectedTerapeuta] = useState('');
-  const [assigning, setAssigning] = useState(false);
-
-  // States for Upload Doc
-  const [uploading, setUploading] = useState(false);
-  const [file, setFile] = useState(null);
-  const [docTitulo, setDocTitulo] = useState('');
-  const [docDesc, setDocDesc] = useState('');
-  const [docTipo, setDocTipo] = useState('otro');
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    async function loadData() {
-      try {
-        const [pacData, asigData, docData, terData] = await Promise.all([
-          pacientesService.getPaciente(id),
-          asignacionesService.getAsignacionesByPaciente(id),
-          documentosService.getDocumentsByPaciente(id),
-          terapeutasService.getTerapeutas()
-        ]);
-        setPaciente(pacData);
-        setAsignaciones(asigData);
-        setDocumentos(docData);
-        setTerapeutas(terData);
-      } catch (err) {
-        console.error("Error al cargar la información del paciente");
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
+    pacientesService.getPaciente(id)
+      .then(setPaciente)
+      .catch(() => setError('Error al cargar la información del paciente'))
+      .finally(() => setLoading(false));
   }, [id]);
 
-  const handleDeactivate = async () => {
-    if (window.confirm('¿Seguro que desea desactivar a este paciente? (No se borrará, pero no aparecerá en las listas activas)')) {
-      try {
-        await pacientesService.deactivatePaciente(id);
-        navigate('/pacientes');
-      } catch (error) {
-        console.error("Error al desactivar el paciente");
-        alert('Error al desactivar el paciente.');
-      }
-    }
-  };
-
-  const handleAddAsignacion = async (e) => {
-    e.preventDefault();
-    if (!selectedTerapeuta) return;
-    setAssigning(true);
-    try {
-      await asignacionesService.addAsignacion(id, selectedTerapeuta);
-      const asigData = await asignacionesService.getAsignacionesByPaciente(id);
-      setAsignaciones(asigData);
-      setSelectedTerapeuta('');
-    } catch (err) {
-      console.error("Error al asignar terapeuta");
-      alert('Error al asignar terapeuta. Es posible que ya esté asignado.');
-    } finally {
-      setAssigning(false);
-    }
-  };
-
-  const handleRemoveAsignacion = async (asigId) => {
-    if (window.confirm('¿Seguro que desea quitar a este terapeuta del caso?')) {
-      try {
-        await asignacionesService.removeAsignacion(asigId);
-        setAsignaciones(asignaciones.filter(a => a.id !== asigId));
-      } catch (err) {
-        console.error("Error al cargar la información del paciente");
-        alert('Error al quitar terapeuta.');
-      }
-    }
-  };
-
-  const handleUpload = async (e) => {
-    e.preventDefault();
-    if (!file) return;
-    
-    // Validate PDF and size (e.g., 5MB max)
-    if (file.type !== 'application/pdf') {
-      alert('Por favor selecciona un archivo PDF.');
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      alert('El archivo es muy grande. El tamaño máximo es 5MB.');
-      return;
-    }
-
-    setUploading(true);
-    try {
-      await documentosService.uploadDocument(file, id, docTitulo, docDesc, docTipo, perfil.id);
-      const docData = await documentosService.getDocumentsByPaciente(id);
-      setDocumentos(docData);
-      
-      // Reset form
-      setFile(null);
-      setDocTitulo('');
-      setDocDesc('');
-      setDocTipo('otro');
-      e.target.reset(); // clear file input visually
-    } catch (err) {
-      console.error("Error al asignar terapeuta");
-      alert('Error al subir el documento.');
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  if (loading) return <div className="p-10"><Spinner /></div>;
-  if (!paciente) return <div className="p-10 text-center text-xl">Paciente no encontrado.</div>;
+  if (loading) return <div className="flex justify-center p-12"><Spinner /></div>;
+  if (error) return <div className="text-red-600 text-center p-12 text-lg">{error}</div>;
+  if (!paciente) return <div className="text-center p-12 text-lg">Paciente no encontrado</div>;
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-10">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+    <div className="max-w-5xl mx-auto space-y-8 pb-20">
+      
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-4xl font-bold text-stone-900">{paciente.nombres} {paciente.apellidos}</h2>
-          <Link to="/pacientes" className="text-teal-700 hover:underline mt-2 inline-block">&larr; Volver a Pacientes</Link>
-        </div>
-        <div className="flex gap-2">
-          <Link to={`/pacientes/${id}/editar`}>
-            <Button variant="outline">Editar Datos</Button>
+          <h1 className="text-3xl md:text-4xl font-bold text-(--color-text-main)">
+            {paciente.nombre_completo}
+          </h1>
+          <Link to="/pacientes" className="text-(--color-primary-600) hover:underline mt-2 inline-block">
+            &larr; Volver a pacientes
           </Link>
-          <Button variant="secondary" className="text-red-600 hover:bg-red-50" onClick={handleDeactivate}>
-            Desactivar
-          </Button>
         </div>
+        <Button onClick={() => navigate(`/pacientes/${id}/editar`)} className="text-lg py-2">
+          Editar Datos
+        </Button>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-8">
-        {/* Info y Asignaciones (1 columna en md) */}
-        <div className="space-y-8">
-          <Card className="p-6">
-            <h3 className="text-xl font-bold text-stone-800 mb-4 border-b pb-2">Información</h3>
-            <ul className="space-y-3 text-stone-700">
-              <li><strong>Nacimiento:</strong> {new Date(paciente.fecha_nacimiento).toLocaleDateString()}</li>
-              <li><strong>Representante:</strong> {paciente.representante || 'N/A'}</li>
-              <li><strong>Teléfono:</strong> {paciente.telefono || 'N/A'}</li>
-              <li><strong>Correo:</strong> {paciente.correo || 'N/A'}</li>
-              {paciente.observaciones && (
-                <li className="pt-2 border-t mt-2"><strong>Obs:</strong> {paciente.observaciones}</li>
-              )}
-            </ul>
-          </Card>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+        {/* Datos Personales */}
+        <div className="md:col-span-1 space-y-6">
+          <div className="bg-(--color-surface) p-6 rounded-xl border border-(--color-border) shadow-sm space-y-4">
+            <h2 className="text-2xl font-semibold text-(--color-primary-700) border-b border-(--color-border) pb-2">Información</h2>
+            
+            <div>
+              <p className="text-sm font-semibold uppercase text-(--color-text-muted) tracking-wider">Cédula</p>
+              <p className="text-lg text-(--color-text-main)">{paciente.cedula}</p>
+            </div>
+            <div>
+              <p className="text-sm font-semibold uppercase text-(--color-text-muted) tracking-wider">Edad</p>
+              <p className="text-lg text-(--color-text-main)">{calcularEdad(paciente.fecha_nacimiento)}</p>
+            </div>
+            <div>
+              <p className="text-sm font-semibold uppercase text-(--color-text-muted) tracking-wider">Dirección</p>
+              <p className="text-lg text-(--color-text-main)">{paciente.direccion}</p>
+            </div>
+          </div>
 
-          <Card className="p-6">
-            <h3 className="text-xl font-bold text-stone-800 mb-4 border-b pb-2">Terapeutas Asignados</h3>
-            {asignaciones.length === 0 ? (
-              <p className="text-stone-500 italic mb-4">Ningún terapeuta asignado.</p>
-            ) : (
-              <ul className="space-y-3 mb-6">
-                {asignaciones.map(a => (
-                  <li key={a.id} className="flex justify-between items-center bg-stone-50 p-2 rounded">
-                    <span>{a.perfiles.nombres} {a.perfiles.apellidos}</span>
-                    <button onClick={() => handleRemoveAsignacion(a.id)} className="text-red-500 hover:text-red-700 font-bold px-2" title="Quitar">&times;</button>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            <form onSubmit={handleAddAsignacion} className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-stone-700">Asignar nuevo terapeuta:</label>
-              <select 
-                className="w-full px-3 py-2 rounded border border-stone-300 bg-white"
-                value={selectedTerapeuta}
-                onChange={(e) => setSelectedTerapeuta(e.target.value)}
-                disabled={assigning}
-              >
-                <option value="">Seleccione...</option>
-                {terapeutas.map(t => (
-                  <option key={t.id} value={t.id}>{t.nombres} {t.apellidos} ({t.especialidad || 'General'})</option>
-                ))}
-              </select>
-              <Button type="submit" disabled={!selectedTerapeuta} isLoading={assigning} className="py-2 text-base mt-2">
-                Asignar
-              </Button>
-            </form>
-          </Card>
-        </div>
-
-        {/* Documentos (2 columnas en md) */}
-        <div className="md:col-span-2 space-y-8">
-          <Card className="p-6 bg-teal-50 border-teal-100">
-            <h3 className="text-xl font-bold text-teal-900 mb-4">Subir Documento PDF</h3>
-            <form onSubmit={handleUpload} className="grid md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
-                <label className="block text-stone-700 font-medium mb-1">Archivo (solo PDF, max 5MB)</label>
-                <input 
-                  type="file" 
-                  accept="application/pdf"
-                  required
-                  onChange={(e) => setFile(e.target.files[0])}
-                  className="w-full p-2 bg-white rounded border border-teal-200"
-                  disabled={uploading}
-                />
-              </div>
-              <Input label="Título del documento" value={docTitulo} onChange={e => setDocTitulo(e.target.value)} required disabled={uploading} />
-              <div className="flex flex-col gap-2">
-                <label className="text-lg font-medium text-stone-700">Tipo de Documento</label>
-                <select 
-                  value={docTipo} 
-                  onChange={e => setDocTipo(e.target.value)} 
-                  className="w-full px-4 py-3 rounded-lg border text-lg bg-stone-50 text-stone-900 border-stone-300"
-                  disabled={uploading}
-                >
-                  <option value="consentimiento_informado">Consentimiento Informado</option>
-                  <option value="plan_tratamiento">Plan de Tratamiento</option>
-                  <option value="otro">Otro</option>
-                </select>
-              </div>
-              <div className="md:col-span-2">
-                <Input label="Descripción breve (opcional)" value={docDesc} onChange={e => setDocDesc(e.target.value)} disabled={uploading} />
-              </div>
-              <div className="md:col-span-2 pt-2">
-                <Button type="submit" isLoading={uploading}>Subir Archivo</Button>
-              </div>
-            </form>
-          </Card>
-
-          <div>
-            <h3 className="text-2xl font-bold text-stone-900 mb-4">Archivos del Paciente</h3>
-            {documentos.length === 0 ? (
-              <Card className="p-8 text-center text-stone-500">
-                Aún no hay documentos para este paciente.
-              </Card>
-            ) : (
-              <div className="grid sm:grid-cols-2 gap-4">
-                {documentos.map(doc => (
-                  <DocumentCard key={doc.id} document={doc} />
-                ))}
+          <div className="bg-(--color-surface) p-6 rounded-xl border border-(--color-border) shadow-sm space-y-4">
+            <h2 className="text-2xl font-semibold text-(--color-primary-700) border-b border-(--color-border) pb-2">Familiares</h2>
+            
+            <div>
+              <p className="text-sm font-semibold uppercase text-(--color-text-muted) tracking-wider">Madre</p>
+              <p className="text-lg text-(--color-text-main)">{paciente.madre_nombre}</p>
+              <p className="text-(--color-text-muted)">{paciente.madre_telefono}</p>
+            </div>
+            <div>
+              <p className="text-sm font-semibold uppercase text-(--color-text-muted) tracking-wider">Padre</p>
+              <p className="text-lg text-(--color-text-main)">{paciente.padre_nombre}</p>
+              <p className="text-(--color-text-muted)">{paciente.padre_telefono}</p>
+            </div>
+            
+            {paciente.contacto_nombre && (
+              <div className="pt-2 border-t border-(--color-border)">
+                <p className="text-sm font-semibold uppercase text-(--color-text-muted) tracking-wider">Emergencia</p>
+                <p className="text-lg text-(--color-text-main)">{paciente.contacto_nombre}</p>
+                <p className="text-(--color-text-muted)">{paciente.contacto_telefono}</p>
               </div>
             )}
           </div>
         </div>
+
+        {/* Planes de Tratamiento */}
+        <div className="md:col-span-2 space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-semibold text-(--color-primary-700)">Planes de Tratamiento</h2>
+            <Button onClick={() => navigate(`/pacientes/${id}/plan/nuevo`)}>
+              + Nuevo Plan
+            </Button>
+          </div>
+
+          {(!paciente.planes_tratamiento || paciente.planes_tratamiento.length === 0) ? (
+            <div className="bg-(--color-surface) p-12 rounded-xl border border-(--color-border) text-center text-lg text-(--color-text-muted)">
+              No hay planes de tratamiento registrados.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {paciente.planes_tratamiento.map((plan) => (
+                <div key={plan.id} className="bg-(--color-surface) p-6 rounded-xl border border-(--color-border) shadow-sm flex flex-col gap-4">
+                  <div className="flex justify-between items-start border-b border-(--color-border) pb-4">
+                    <div>
+                      <p className="text-sm font-semibold text-(--color-text-muted)">{new Date(plan.fecha).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}</p>
+                      <h3 className="text-xl font-bold text-(--color-text-main) mt-1">{plan.diagnostico}</h3>
+                    </div>
+                    <Button variant="outline" onClick={() => navigate(`/pacientes/${id}/plan/${plan.id}/editar`)}>
+                      Editar
+                    </Button>
+                  </div>
+                  
+                  <div>
+                    <p className="text-sm font-semibold uppercase text-(--color-primary-700) tracking-wider mb-1">Objetivo Inicial</p>
+                    <p className="text-(--color-text-main) whitespace-pre-wrap">{plan.objetivo_inicial}</p>
+                  </div>
+                  
+                  {plan.objetivos_alcanzados && (
+                    <div>
+                      <p className="text-sm font-semibold uppercase text-green-700 tracking-wider mb-1">Objetivos Alcanzados</p>
+                      <p className="text-(--color-text-main) whitespace-pre-wrap">{plan.objetivos_alcanzados}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   );

@@ -29,11 +29,10 @@ export function LoginForm() {
       const perfil = await authService.getProfile(data.user.id);
       
       if (perfil?.rol === 'directora') {
-        navigate('/dashboard');
+        navigate('/pacientes');
       } else if (perfil?.rol === 'terapeuta') {
-        navigate('/mis-pacientes');
+        navigate('/tu-espacio');
       } else {
-        // En caso de que un paciente u otro rol intente ingresar, lo mandamos al index por ahora
         navigate('/');
       }
     } catch (err) {
@@ -49,18 +48,18 @@ export function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-50 flex flex-col">
+    <div className="min-h-screen bg-(--color-background) flex flex-col">
       <header className="p-6">
-        <Link to="/" className="text-2xl font-bold text-teal-800 hover:text-teal-900 transition-colors">
+        <Link to="/" className="text-2xl font-bold text-(--color-primary-800) hover:text-(--color-primary-900) transition-colors">
           &larr; Volver a {CLINIC_INFO.name}
         </Link>
       </header>
       
       <main className="flex-1 flex items-center justify-center p-6">
-        <Card className="w-full max-w-md p-8 shadow-lg">
+        <Card className="w-full max-w-md p-8 shadow-xl border border-(--color-border) bg-(--color-surface)">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-stone-900">Ingresar al sistema</h1>
-            <p className="text-lg text-stone-600 mt-2">Acceso para personal del consultorio</p>
+            <h1 className="text-3xl font-bold text-(--color-text-main)">Ingresar al sistema</h1>
+            <p className="text-lg text-(--color-text-muted) mt-2">Acceso para personal del consultorio</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -85,7 +84,7 @@ export function LoginForm() {
             />
 
             {error && (
-              <div className="p-4 bg-red-50 text-red-700 rounded-lg text-lg border border-red-100">
+              <div className="p-4 bg-red-50 text-red-700 rounded-xl text-lg border border-red-100">
                 {error}
               </div>
             )}

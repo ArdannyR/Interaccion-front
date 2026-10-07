@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { terapeutasService } from './terapeutasService';
 import { Card } from '../../components/Card';
 import { Spinner } from '../../components/Spinner';
@@ -7,6 +6,7 @@ import { Spinner } from '../../components/Spinner';
 export function TerapeutasList() {
   const [terapeutas, setTerapeutas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     async function fetchTerapeutas() {
@@ -15,6 +15,7 @@ export function TerapeutasList() {
         setTerapeutas(data);
       } catch (err) {
         console.error(err);
+        setError("Ocurrió un error al cargar la lista de terapeutas.");
       } finally {
         setLoading(false);
       }
@@ -23,26 +24,37 @@ export function TerapeutasList() {
   }, []);
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-10">
-      <div className="mb-8">
-        <h2 className="text-4xl font-bold text-stone-900">Terapeutas</h2>
-        <Link to="/dashboard" className="text-teal-700 hover:underline mt-2 inline-block">&larr; Volver al panel</Link>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl md:text-4xl font-bold text-(--color-text-main)">Terapeutas</h1>
       </div>
 
       {loading ? (
-        <Spinner />
+        <div className="flex justify-center p-12">
+          <Spinner />
+        </div>
+      ) : error ? (
+        <div className="bg-red-50 text-red-700 p-6 rounded-xl border border-red-200 text-center text-lg">
+          {error}
+        </div>
       ) : terapeutas.length === 0 ? (
-        <Card className="p-12 text-center text-lg text-stone-600">
-          No se encontraron terapeutas registrados.
-        </Card>
+        <div className="bg-(--color-surface) p-12 rounded-xl border border-(--color-border) text-center text-lg text-(--color-text-muted)">
+          No se encontraron terapeutas activos.
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {terapeutas.map((t) => (
-            <Card key={t.id} className="p-6 hover:shadow-md transition-shadow">
-              <h3 className="text-2xl font-bold text-stone-900 mb-2">{t.nombres} {t.apellidos}</h3>
-              <p className="text-lg text-stone-600 mb-1">Especialidad: {t.especialidad || 'General'}</p>
-              <p className="text-lg font-medium text-teal-800">
-                Pacientes asignados: {t.asignaciones?.[0]?.count || 0}
+            <Card key={t.id} className="p-6 flex flex-col items-center text-center hover:shadow-lg transition-shadow bg-(--color-surface) border border-(--color-border)">
+              <div className="w-24 h-24 bg-(--color-primary-100) rounded-full flex items-center justify-center text-(--color-primary-600) mb-4 shadow-sm">
+                <span className="text-2xl font-bold uppercase">
+                  {t.nombres?.charAt(0)}{t.apellidos?.charAt(0)}
+                </span>
+              </div>
+              <h3 className="text-xl font-bold text-(--color-text-main) line-clamp-2">
+                {t.nombres} {t.apellidos}
+              </h3>
+              <p className="text-(--color-text-muted) mt-2 capitalize font-medium">
+                {t.especialidad || 'Especialidad General'}
               </p>
             </Card>
           ))}
