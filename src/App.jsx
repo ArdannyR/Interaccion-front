@@ -15,6 +15,7 @@ import { PacienteForm } from './features/pacientes/PacienteForm';
 import { PacienteDetail } from './features/pacientes/PacienteDetail';
 import { PlanForm } from './features/pacientes/PlanForm';
 import { TerapeutasList } from './features/terapeutas/TerapeutasList';
+import { TerapeutaDetail } from './features/terapeutas/TerapeutaDetail';
 import { HorariosView } from './features/horarios/HorariosView';
 import { PerfilView } from './features/perfil/PerfilView';
 import { AjustesView } from './features/settings/AjustesView';
@@ -41,6 +42,7 @@ function App() {
                 <Route path="/pacientes/:id/plan/nuevo" element={<PlanForm />} />
                 <Route path="/pacientes/:id/plan/:planId/editar" element={<PlanForm />} />
                 <Route path="/terapeutas" element={<TerapeutasList />} />
+                <Route path="/terapeutas/:id" element={<TerapeutaDetail />} />
                 <Route path="/horarios" element={<HorariosView />} />
                 <Route path="/perfil" element={<PerfilView />} />
                 <Route path="/ajustes" element={<AjustesView />} />

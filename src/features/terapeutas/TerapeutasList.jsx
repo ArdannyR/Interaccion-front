@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { terapeutasService } from './terapeutasService';
 import { Card } from '../../components/Card';
 import { Spinner } from '../../components/Spinner';
@@ -7,6 +8,7 @@ export function TerapeutasList() {
   const [terapeutas, setTerapeutas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function fetchTerapeutas() {
@@ -42,9 +44,13 @@ export function TerapeutasList() {
           No se encontraron terapeutas activos.
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(17rem,1fr))] gap-6">
           {terapeutas.map((t) => (
-            <Card key={t.id} className="p-6 flex flex-col items-center text-center hover:shadow-lg transition-shadow bg-(--color-surface) border border-(--color-border)">
+            <Card 
+              key={t.id} 
+              className="p-6 flex flex-col items-center text-center hover:shadow-lg transition-all hover:border-(--color-primary-300) cursor-pointer"
+              onClick={() => navigate(`/terapeutas/${t.id}`)}
+            >
               <div className="w-24 h-24 bg-(--color-primary-100) rounded-full flex items-center justify-center text-(--color-primary-600) mb-4 shadow-sm">
                 <span className="text-2xl font-bold uppercase">
                   {t.nombres?.charAt(0)}{t.apellidos?.charAt(0)}

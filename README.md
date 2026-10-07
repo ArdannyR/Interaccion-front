@@ -16,8 +16,9 @@ La aplicación para la directora sigue un diseño tipo Moodle (Barra lateral a l
 - `/pacientes/:id/editar` (Edición de datos de un paciente)
 - `/pacientes/:id/plan/nuevo` (Crear un plan de tratamiento nuevo)
 - `/pacientes/:id/plan/:planId/editar` (Editar un plan de tratamiento existente)
-- `/terapeutas` (Directorio de terapeutas, solo lectura)
-- `/horarios` (Vista previa del horario)
+- `/terapeutas` (Directorio de terapeutas)
+- `/terapeutas/:id` (Vista de detalles de un terapeuta y su calendario de citas)
+- `/horarios` (Vista del calendario personal y gestión de citas)
 - `/perfil` (Datos de la cuenta iniciada)
 - `/ajustes` (Configuración de tonos y tamaño de texto)
 
@@ -50,5 +51,5 @@ Es **obligatorio** configurar la base de datos para que la aplicación funcione.
 Revisa el archivo `supabase.sql` incluido en la raíz de este proyecto. Copia y pega su contenido en la sección **SQL Editor** de tu panel de Supabase y ejecútalo.
 
 Este script se encargará de:
-- Crear los Enum y las tablas (`perfiles`, `pacientes`, `planes_tratamiento`).
+- Crear los Enum y las tablas (`perfiles`, `pacientes`, `planes_tratamiento`, `citas`).
 - Crear funciones de seguridad y activar Row Level Security (RLS) para proteger los datos a nivel de base de datos.

@@ -32,5 +32,6 @@ export const terapeutasService = {
       .single();
     if (error) throw error;
     return data;
-  }
+  },
+
 };

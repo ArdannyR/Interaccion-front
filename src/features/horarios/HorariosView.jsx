@@ -1,45 +1,134 @@
-import { Card } from '../../components/Card';
+import { useState, useEffect } from 'react';
+import { useAuth } from '../auth/AuthContext';
+import { citasService } from '../citas/citasService';
+import { getStartOfWeekLocal, addDaysLocal, getLocalTodayDate } from '../../utils/fechas';
+import { WeeklyCalendar } from '../citas/WeeklyCalendar';
+import { CitaFormModal } from '../citas/CitaFormModal';
+import { CitaDetalleModal } from '../citas/CitaDetalleModal';
+import { Button } from '../../components/Button';
+import { Spinner } from '../../components/Spinner';
 
 export function HorariosView() {
-  const horas = [];
-  for (let h = 8; h <= 18; h++) {
-    horas.push(`${h.toString().padStart(2, '0')}:00`);
-  }
-  const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+  const { perfil } = useAuth();
+  
+  const [citas, setCitas] = useState([]);
+  const [semanaInicio, setSemanaInicio] = useState(getStartOfWeekLocal(getLocalTodayDate()));
+  const [loading, setLoading] = useState(true);
+  
+  const [modalFormOpen, setModalFormOpen] = useState(false);
+  const [modalDetalleOpen, setModalDetalleOpen] = useState(false);
+  const [citaSeleccionada, setCitaSeleccionada] = useState(null);
+  const [formInitialData, setFormInitialData] = useState({});
+
+  const fetchCitas = async () => {
+    if (!perfil?.id) return;
+    setLoading(true);
+    try {
+      const hasta = addDaysLocal(semanaInicio, 4); // Viernes
+      const data = await citasService.getCitas({
+        desde: semanaInicio,
+        hasta: hasta,
+        profesionalId: perfil.id
+      });
+      setCitas(data);
+    } catch (err) {
+      console.error('Error cargando citas', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchCitas();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [perfil?.id, semanaInicio]);
+
+  const handleCambiarSemana = (dias) => {
+    if (dias === 0) {
+      setSemanaInicio(getStartOfWeekLocal(getLocalTodayDate()));
+    } else {
+      setSemanaInicio(prev => addDaysLocal(prev, dias));
+    }
+  };
+
+  const handleClickCasillaVacia = (fecha, hora) => {
+    setFormInitialData({ fecha, hora_inicio: hora, profesional_id: perfil.id });
+    setModalFormOpen(true);
+  };
+
+  const handleClickCita = (cita) => {
+    setCitaSeleccionada(cita);
+    setModalDetalleOpen(true);
+  };
+
+  const handleSuccessForm = () => {
+    setModalFormOpen(false);
+    fetchCitas();
+  };
+
+  const handleCancelCita = async (id) => {
+    await citasService.cancelCita(id);
+    setModalDetalleOpen(false);
+    fetchCitas();
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl md:text-4xl font-bold text-(--color-text-main)">Horarios</h1>
+    <div className="space-y-6 pb-20">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <h1 className="text-3xl md:text-4xl font-bold text-(--color-text-main)">Mi Horario</h1>
+        <Button 
+          onClick={() => {
+            setFormInitialData({ profesional_id: perfil.id });
+            setModalFormOpen(true);
+          }} 
+          className="text-lg py-3 px-6"
+        >
+          + Nueva cita
+        </Button>
       </div>
       
-      <Card className="overflow-x-auto">
-        <div className="min-w-[800px] p-6">
-          <div className="grid grid-cols-6 gap-4 mb-4">
-            <div className="font-semibold text-(--color-text-muted) text-center">Hora</div>
-            {dias.map(dia => (
-              <div key={dia} className="font-semibold text-(--color-primary-700) text-center text-lg">{dia}</div>
-            ))}
-          </div>
-          
-          <div className="space-y-4">
-            {horas.map(hora => (
-              <div key={hora} className="grid grid-cols-6 gap-4">
-                <div className="text-center font-medium text-(--color-text-muted) py-2">{hora}</div>
-                {dias.map(dia => (
-                  <div 
-                    key={`${dia}-${hora}`} 
-                    className="border-2 border-dashed border-(--color-border) rounded-lg p-2 text-center text-sm text-(--color-text-muted) bg-(--color-surface-hover) flex items-center justify-center min-h-[60px]"
-                  >
-                    {/* Futuro: Mostrar aquí tarjeta de asignación */}
-                    Disponible
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
+      {loading && citas.length === 0 ? (
+        <div className="flex justify-center p-12"><Spinner /></div>
+      ) : (
+        <div className="relative">
+          {loading && (
+            <div className="absolute inset-0 bg-white/50 z-10 flex items-center justify-center rounded-xl">
+              <Spinner />
+            </div>
+          )}
+          <WeeklyCalendar 
+            citas={citas}
+            semanaInicio={semanaInicio}
+            onCambiarSemana={handleCambiarSemana}
+            onClickCasillaVacia={handleClickCasillaVacia}
+            onClickCita={handleClickCita}
+            modo="profesional"
+          />
         </div>
-      </Card>
+      )}
+
+      {modalFormOpen && (
+        <CitaFormModal 
+          onClose={() => setModalFormOpen(false)}
+          onSuccess={handleSuccessForm}
+          initialData={formInitialData}
+          lockProfesional={true}
+        />
+      )}
+
+      {modalDetalleOpen && citaSeleccionada && (
+        <CitaDetalleModal 
+          cita={citaSeleccionada}
+          onClose={() => setModalDetalleOpen(false)}
+          onEdit={(c) => {
+            setFormInitialData(c);
+            setModalDetalleOpen(false);
+            setModalFormOpen(true);
+          }}
+          onCancelCita={handleCancelCita}
+        />
+      )}
     </div>
   );
 }

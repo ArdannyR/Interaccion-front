@@ -64,7 +64,7 @@ export function PacientesList() {
           No se encontraron pacientes.
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-6">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(17rem,1fr))] gap-6">
           {pacientes.map((p) => (
             <PacienteCard key={p.id} paciente={p} />
           ))}

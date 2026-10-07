@@ -21,15 +21,15 @@ export function PacienteCard({ paciente }) {
       </div>
 
       {/* Bottom areas */}
-      <div className="flex divide-x divide-(--color-border) flex-1">
+      <div className="flex divide-x divide-(--color-border) flex-1 min-h-[5rem]">
         <button 
           onClick={() => navigate(`/pacientes/${paciente.id}`)}
-          className="flex-1 p-4 text-center hover:bg-(--color-surface-hover) transition-colors flex flex-col justify-center"
+          className="flex-1 p-3 text-center hover:bg-(--color-surface-hover) transition-colors flex flex-col justify-center min-w-0"
         >
-          <span className="text-sm font-semibold uppercase text-(--color-primary-700) tracking-wider block mb-1">
+          <span className="text-base font-semibold text-(--color-primary-700) block mb-1">
             Datos
           </span>
-          <span className="text-sm text-(--color-text-muted)">Ver perfil</span>
+          <span className="text-sm text-(--color-text-muted) break-words line-clamp-2">Ver perfil</span>
         </button>
         
         <button 
@@ -40,12 +40,12 @@ export function PacienteCard({ paciente }) {
               navigate(`/pacientes/${paciente.id}/plan/nuevo`);
             }
           }}
-          className="flex-1 p-4 text-center hover:bg-(--color-surface-hover) transition-colors flex flex-col justify-center"
+          className="flex-1 p-3 text-center hover:bg-(--color-surface-hover) transition-colors flex flex-col justify-center min-w-0"
         >
-          <span className="text-sm font-semibold uppercase text-(--color-primary-700) tracking-wider block mb-1">
+          <span className="text-base font-semibold text-(--color-primary-700) block mb-1">
             Diagnóstico
           </span>
-          <span className="text-sm text-(--color-text-muted) line-clamp-2">
+          <span className="text-sm text-(--color-text-muted) break-words line-clamp-2">
             {plan ? plan.diagnostico : "Sin plan"}
           </span>
         </button>
