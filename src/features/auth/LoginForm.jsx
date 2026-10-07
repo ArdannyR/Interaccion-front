@@ -48,15 +48,23 @@ export function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-(--color-background) flex flex-col">
-      <header className="p-6">
-        <Link to="/" className="text-2xl font-bold text-(--color-primary-800) hover:text-(--color-primary-900) transition-colors">
+    <div className="min-h-screen bg-transparent relative overflow-hidden flex flex-col">
+      {/* Background blobs */}
+      <div className="absolute inset-0 bg-linear-to-br from-(--color-primary-50) via-(--color-background) to-(--color-primary-100)/40 -z-20 pointer-events-none" />
+      <div className="absolute top-[10%] left-[10%] w-[500px] h-[500px] bg-(--color-primary-300)/20 rounded-full blur-3xl animate-float -z-10 pointer-events-none" />
+      <div className="absolute bottom-[10%] right-[10%] w-[400px] h-[400px] bg-(--color-primary-400)/20 rounded-full blur-3xl animate-float -z-10 pointer-events-none" style={{ animationDelay: '-10s' }} />
+
+      <header className="p-6 relative z-10">
+        <Link 
+          to="/" 
+          className="text-2xl font-bold bg-clip-text text-transparent bg-linear-to-r from-(--color-primary-700) to-(--color-primary-500) hover:from-(--color-primary-800) hover:to-(--color-primary-600) transition-all inline-block"
+        >
           &larr; Volver a {CLINIC_INFO.name}
         </Link>
       </header>
       
-      <main className="flex-1 flex items-center justify-center p-6">
-        <Card className="w-full max-w-md p-8 shadow-xl border border-(--color-border) bg-(--color-surface)">
+      <main className="flex-1 flex items-center justify-center p-6 relative z-10">
+        <Card className="w-full max-w-md p-8 shadow-2xl border border-white/50 bg-(--color-surface)/80 backdrop-blur-xl animate-scale-in">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-(--color-text-main)">Ingresar al sistema</h1>
             <p className="text-lg text-(--color-text-muted) mt-2">Acceso para personal del consultorio</p>
@@ -84,7 +92,7 @@ export function LoginForm() {
             />
 
             {error && (
-              <div className="p-4 bg-red-50 text-red-700 rounded-xl text-lg border border-red-100">
+              <div className="p-4 bg-red-50/90 backdrop-blur-sm text-red-700 rounded-xl text-lg border border-red-200 animate-fade-up">
                 {error}
               </div>
             )}

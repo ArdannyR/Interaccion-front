@@ -74,8 +74,8 @@ export function HorariosView() {
   };
 
   return (
-    <div className="space-y-6 pb-20">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="space-y-4 animate-fade-up">
+      <div className="flex justify-between items-center gap-4">
         <h1 className="text-3xl md:text-4xl font-bold text-(--color-text-main)">Mi Horario</h1>
         <Button 
           onClick={() => {

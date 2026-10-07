@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { pacientesService } from './pacientesService';
 import { Input } from '../../components/Input';
 import { Button } from '../../components/Button';
-import { Spinner } from '../../components/Spinner';
 import { PacienteCard } from './PacienteCard';
 
 export function PacientesList() {
@@ -52,8 +51,8 @@ export function PacientesList() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center p-12">
-          <Spinner />
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(17rem,1fr))] gap-6">
+          {[1,2,3,4,5,6].map(i => <div key={i} className="skeleton h-[18rem]" />)}
         </div>
       ) : error ? (
         <div className="bg-red-50 text-red-700 p-6 rounded-xl border border-red-200 text-center text-lg">
